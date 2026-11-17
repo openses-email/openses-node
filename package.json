@@ -1,5 +1,5 @@
 {
-  "name": "openses",
+  "name": "openses-sdk",
   "version": "1.0.0",
   "description": "TypeScript SDK for OpenSES: send email, manage contacts and sequences, answer the inbox and verify webhooks on your own Amazon SES.",
   "type": "module",

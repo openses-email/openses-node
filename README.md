@@ -1,4 +1,4 @@
-# openses
+# openses-sdk
 
 TypeScript SDK for [OpenSES](https://openses.email), the open-source email platform on your own Amazon SES. Send email, manage contacts and sequences, answer the inbox and verify webhooks.
 
@@ -7,13 +7,13 @@ No dependencies. Works on Node 18 and later, and on any runtime with `fetch`.
 ## Install
 
 ```bash
-npm install openses
+npm install openses-sdk
 ```
 
 ## Send an email
 
 ```ts
-import { OpenSES } from "openses";
+import { OpenSES } from "openses-sdk";
 
 const openses = new OpenSES({ apiKey: process.env.OPENSES_API_KEY });
 
@@ -75,7 +75,7 @@ if (data[0]) await openses.threads.reply(data[0].id, { text: "Thanks, we are on 
 Every failed call throws an `OpenSESError` with the HTTP `status`, the API's `code` and a readable `message`.
 
 ```ts
-import { OpenSESError } from "openses";
+import { OpenSESError } from "openses-sdk";
 
 try {
   await openses.emails.send({ from: "hi@acme.com", to: "jane@example.com", subject: "Hi", text: "Hello" });
@@ -93,7 +93,7 @@ try {
 `verifyWebhook` checks the signature and returns the payload. Give it the raw request body, not parsed JSON.
 
 ```ts
-import { verifyWebhook } from "openses";
+import { verifyWebhook } from "openses-sdk";
 
 export async function POST(request: Request) {
   const event = verifyWebhook({
