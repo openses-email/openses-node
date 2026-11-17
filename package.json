@@ -1,0 +1,58 @@
+{
+  "name": "openses",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for OpenSES: send email, manage contacts and sequences, answer the inbox and verify webhooks on your own Amazon SES.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p .",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": {
+    "name": "OpenSES",
+    "url": "https://openses.email"
+  },
+  "license": "MIT",
+  "homepage": "https://openses.email",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openses-email/openses-node.git"
+  },
+  "bugs": {
+    "url": "https://github.com/openses-email/openses-node/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "openses",
+    "amazon-ses",
+    "aws-ses",
+    "email",
+    "transactional-email",
+    "email-api",
+    "sdk",
+    "typescript"
+  ]
+}
