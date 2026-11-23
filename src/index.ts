@@ -97,7 +97,7 @@ export interface UpsertSequence {
   name: string; senders: string[]; domain?: string; mode?: "sales" | "marketing"; status?: "draft" | "active" | "paused";
   stop_on_reply?: boolean; stop_on_unsubscribe?: boolean; skip_weekends?: boolean;
   /** Each step names its template by id or name. */
-  steps: { delay: number; delay_unit: "hours" | "days"; template: string }[];
+  steps: { delay: number; delay_unit: "minutes" | "hours" | "days"; template: string }[];
 }
 /** Who to enroll or stop: an existing contact by id, or an address (created on enroll if new). */
 export type ContactRef = { contact_id: string; email?: never } | { email: string; contact_id?: never };
@@ -204,7 +204,8 @@ export class OpenSES {
     list: (filter: { domain?: string } = {}) => this.request<List<Sequence>>("GET", "/sequences", { query: filter }),
     /** Creates the sequence with its steps, or updates the one with that name on the domain. */
     upsert: (sequence: UpsertSequence) => this.request<{ created: boolean; sequence: Pick<Sequence, "id" | "domain" | "name" | "status" | "mode" | "steps"> }>("PUT", "/sequences", { body: sequence }),
-    enroll: (id: string, who: ContactRef & { name?: string; properties?: Record<string, string> }) =>
+    /** `restart: true` starts a contact who is or was in the sequence again from the first step. */
+    enroll: (id: string, who: ContactRef & { name?: string; properties?: Record<string, string>; restart?: boolean }) =>
       this.request<{ enrolled: boolean; contact_id: string; sequence_id: string }>("POST", `/sequences/${encodeURIComponent(id)}/enroll`, { body: who }),
     stop: (id: string, who: ContactRef) => this.request<{ stopped: boolean; contact_id: string | null; sequence_id: string }>("POST", `/sequences/${encodeURIComponent(id)}/stop`, { body: who }),
   };
