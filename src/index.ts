@@ -92,10 +92,16 @@ export interface Topic { id: string; name: string; slug: string; description: st
 export interface Template { id: string; name: string; subject: string; variables: string[]; domain: string; updated_at: string }
 export interface TemplateDetail extends Template { html: string; text: string }
 export interface UpsertTemplate { name: string; subject: string; html?: string; text?: string; domain?: string }
-export interface Sequence { id: string; domain: string; name: string; status: string; mode: string; trigger: string; steps: number; enrolled: number; active: number; completed: number; replied: number; created_at: string }
+export interface Sequence { id: string; domain: string; name: string; status: string; mode: string; trigger: string; segment_id: string | null; exit_on_leave: boolean; steps: number; enrolled: number; active: number; completed: number; replied: number; /** Finished before the latest steps were added. */ waiting: number; created_at: string }
+/** Who a sequence with a segment would email. Every matching contact is counted once: unsubscribed, else suppressed, else already enrolled, else will receive. */
+export interface SequenceAudience { sequence_id: string; segment: { id: string; name: string }; matching: number; unsubscribed: number; suppressed: number; already_enrolled: number; will_receive: number; minutes_to_enroll: number; contacts?: { id: string; email: string; name: string | null }[] }
 export interface UpsertSequence {
   name: string; senders: string[]; domain?: string; mode?: "sales" | "marketing"; status?: "draft" | "active" | "paused";
   stop_on_reply?: boolean; stop_on_unsubscribe?: boolean; skip_weekends?: boolean;
+  /** The segment the sequence is for, by id or name; null removes it. Contacts who start matching are enrolled while it is active. */
+  segment?: string | null;
+  /** Take a contact out when they no longer match the segment. */
+  exit_on_leave?: boolean;
   /** Each step names its template by id or name. */
   steps: { delay: number; delay_unit: "minutes" | "hours" | "days"; template: string }[];
 }
@@ -203,11 +209,18 @@ export class OpenSES {
   readonly sequences = {
     list: (filter: { domain?: string } = {}) => this.request<List<Sequence>>("GET", "/sequences", { query: filter }),
     /** Creates the sequence with its steps, or updates the one with that name on the domain. */
-    upsert: (sequence: UpsertSequence) => this.request<{ created: boolean; sequence: Pick<Sequence, "id" | "domain" | "name" | "status" | "mode" | "steps"> }>("PUT", "/sequences", { body: sequence }),
+    upsert: (sequence: UpsertSequence) => this.request<{ created: boolean; sequence: Pick<Sequence, "id" | "domain" | "name" | "status" | "mode" | "segment_id" | "exit_on_leave" | "steps" | "waiting"> }>("PUT", "/sequences", { body: sequence }),
     /** `restart: true` starts a contact who is or was in the sequence again from the first step. */
     enroll: (id: string, who: ContactRef & { name?: string; properties?: Record<string, string>; restart?: boolean }) =>
       this.request<{ enrolled: boolean; contact_id: string; sequence_id: string }>("POST", `/sequences/${encodeURIComponent(id)}/enroll`, { body: who }),
     stop: (id: string, who: ContactRef) => this.request<{ stopped: boolean; contact_id: string | null; sequence_id: string }>("POST", `/sequences/${encodeURIComponent(id)}/stop`, { body: who }),
+    /** Who the sequence's segment would email right now; `list` also returns the contacts behind one of the numbers. */
+    audience: (id: string, query: { list?: "eligible" | "unsubscribed" | "suppressed" | "enrolled"; limit?: number; offset?: number } = {}) =>
+      this.request<SequenceAudience>("GET", `/sequences/${encodeURIComponent(id)}/audience`, { query }),
+    /** Enrolls everyone in the segment who may be emailed and is not in the sequence yet, at the sequence's sending speed. */
+    enrollAudience: (id: string) => this.request<{ sequence_id: string; enrolled: number; finishes_at: string | null }>("POST", `/sequences/${encodeURIComponent(id)}/enroll-audience`),
+    /** After adding steps: sends them to contacts who had already finished the sequence. */
+    continue: (id: string) => this.request<{ sequence_id: string; continued: number }>("POST", `/sequences/${encodeURIComponent(id)}/continue`),
   };
 
   readonly suppressions = {
